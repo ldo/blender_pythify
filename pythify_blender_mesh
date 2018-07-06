@@ -1,0 +1,132 @@
+#!/bin/bash
+#+
+#TBD
+#-
+
+opterror()
+  {
+    echo "$0: $1" 1>&2
+    exit 3
+  } # opterror
+
+blender=blender
+do_obj=
+do_mesh=
+for ((;;)); do
+    if [ "${1:0:2}" != "--" ]; then
+        break
+    fi
+    if [ "$1" == "--" ]; then
+        shift
+        break
+    fi
+    opt="${1:2:${#1}}"
+    shift
+    val="${opt#*=}"
+    opt="${opt%%=*}"
+    if [ "$opt" = "blender" ]; then
+        blender="$val"
+    elif [ "$opt" = "mesh" ]; then
+        do_mesh="$val"
+    elif [ "$opt" = "object" ]; then
+        do_obj="$val"
+    else
+        opterror "bad option $opt"
+    fi
+done
+if [ -z "$(type -p "$blender")" ]; then
+    opterror "no such executable “$blender”"
+fi
+if [ $# != 1 ]; then
+    opterror $'Usage:\n\t'"$0 "$'<blendfile>'
+fi
+blendfile="$1"
+export RENDER_blendfile="$blendfile"
+export RENDER_do_obj="$do_obj"
+export RENDER_do_mesh="$do_mesh"
+
+exec "$blender" -noaudio 5>&1 1>/dev/null -b -P <(cat <<'EOD'
+import sys
+import os
+import getopt
+import bpy
+
+try :
+    os.wait() # gobble zombie child of shell which was previously in this process slot
+except ChildProcessError :
+    # can happen intermittently?
+    pass
+#end try
+
+out = os.fdopen(5, "w")
+  # use a different fd from stdout, only way it seems to avoid
+  # output being polluted by Blender’s messages
+
+#+
+# Mainline
+#-
+
+blendfile = os.getenv("RENDER_blendfile")
+do_obj = os.getenv("RENDER_do_obj", "")
+do_mesh = os.getenv("RENDER_do_mesh", "")
+nr_digits = 7
+
+bpy.ops.wm.open_mainfile(filepath = blendfile)
+if do_obj != "" and do_mesh != "" :
+    raise getopt.GetoptError("specify at most one of --object or --mesh")
+#end if
+if do_obj == "" and do_mesh == "" :
+    the_obj = bpy.context.scene.objects.active
+    if the_obj == None :
+        raise getopt.GetoptError("no object specified, and no active object")
+    #end if
+elif do_obj != "" :
+    the_obj = bpy.data.objects.get(do_obj)
+    if the_obj == None :
+        raise getopt.GetoptError("no such object “%s”" % do_obj)
+    #end if
+else :
+    the_obj = None
+#end if
+if the_obj != None :
+    the_mesh = the_obj.data
+    if type(the_mesh) != bpy.types.Mesh :
+        raise getopt.GetoptError("object “%s” is not a mesh" % do_obj)
+    #end if
+elif do_mesh != "" :
+    the_mesh = bpy.data.meshes.get(do_mesh)
+    if the_mesh == None :
+        raise getopt.GetoptError("no such mesh “%s”" % do_mesh)
+    #end if
+else :
+    assert False
+#end if
+
+out.write \
+  (
+    "vertices = \\\n"
+    "  [\n"
+  )
+verts_format = "(" + ", ".join(["%%.%dg" % nr_digits] * 3) + ")"
+for v in the_mesh.vertices :
+    out.write("    " + verts_format % tuple(v.co) + ",\n")
+#end for
+out.write \
+  (
+    "  ]\n"
+    "\n"
+    "faces = \\\n"
+    "  [\n"
+  )
+for f in the_mesh.polygons :
+    out.write \
+      (
+        "    [" + ", ".join("%d" % i for i in f.vertices) + "],\n"
+      )
+#end for
+out.write \
+  (
+    "  ]\n"
+  )
+EOD
+)
