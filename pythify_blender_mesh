@@ -1,6 +1,9 @@
 #!/bin/bash
 #+
-#TBD
+# This script runs Blender in batch mode on the specified .blend file,
+# and extracts the geometry of a specified mesh object in Python form,
+# such that it can be passed to the from_py_data API call to recreate
+# the mesh geometry.
 #-
 
 opterror()
