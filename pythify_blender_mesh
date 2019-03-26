@@ -131,5 +131,43 @@ out.write \
   (
     "  ]\n"
   )
+if the_obj != None and len(the_obj.vertex_groups) != 0 :
+    group_indices = dict \
+      (
+        (the_obj.vertex_groups[i].name, i)
+        for i in range(len(the_obj.vertex_groups))
+      )
+    groups = {}
+    for v in the_mesh.vertices :
+        for vg in v.groups :
+            if vg.group in groups :
+                group_entry = groups[vg.group]
+            else :
+                group_entry = {}
+                groups[vg.group] = group_entry
+            #end if
+            group_entry[v.index] = vg.weight
+        #end for
+    #end for
+    out.write \
+      (
+        "vertex_groups = \\\n"
+        "  {\n"
+      )
+    for group_name in sorted(group_indices.keys()) :
+        group_index = group_indices[group_name]
+        group_vertices = groups.get(group_index, {})
+        out.write("    %s :\n" % repr(group_name))
+        out.write("      {\n")
+        for v in sorted(group_vertices.keys()) :
+            out.write("        %%d : %%.%dg,\n" % nr_digits % (v, group_vertices[v]))
+        #end for
+        out.write("      },\n")
+    #end for
+    out.write \
+      (
+        "  }\n"
+      )
+#end if
 EOD
 )
