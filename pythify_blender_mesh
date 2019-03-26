@@ -15,6 +15,7 @@ opterror()
 blender=blender
 do_obj=
 do_mesh=
+do_weights=1
 for ((;;)); do
     if [ "${1:0:2}" != "--" ]; then
         break
@@ -31,6 +32,8 @@ for ((;;)); do
         blender="$val"
     elif [ "$opt" = "mesh" ]; then
         do_mesh="$val"
+    elif [ "$opt" = "noweights" ]; then
+        do_weights=
     elif [ "$opt" = "object" ]; then
         do_obj="$val"
     else
@@ -47,6 +50,7 @@ blendfile="$1"
 export RENDER_blendfile="$blendfile"
 export RENDER_do_obj="$do_obj"
 export RENDER_do_mesh="$do_mesh"
+export RENDER_do_weights="$do_weights"
 
 exec "$blender" -noaudio 5>&1 1>/dev/null -b -P <(cat <<'EOD'
 import sys
@@ -72,6 +76,7 @@ out = os.fdopen(5, "w")
 blendfile = os.getenv("RENDER_blendfile")
 do_obj = os.getenv("RENDER_do_obj", "")
 do_mesh = os.getenv("RENDER_do_mesh", "")
+do_weights = os.getenv("RENDER_do_weights", "")
 nr_digits = 7
 
 bpy.ops.wm.open_mainfile(filepath = blendfile)
@@ -161,7 +166,13 @@ if the_obj != None and len(the_obj.vertex_groups) != 0 :
         out.write("    %s :\n" % repr(group_name))
         out.write("      {\n")
         for v in sorted(group_vertices.keys()) :
-            out.write("        %%d : %%.%dg,\n" % nr_digits % (v, group_vertices[v]))
+            if do_weights :
+                out.write("        %%d : %%.%dg,\n" % nr_digits % (v, group_vertices[v]))
+            else :
+                if group_vertices[v] != 0 :
+                    out.write("        %d,\n" % v)
+                #end if
+            #end if
         #end for
         out.write("      },\n")
     #end for
