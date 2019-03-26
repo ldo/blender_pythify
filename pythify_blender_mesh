@@ -131,6 +131,7 @@ out.write \
   (
     "  ]\n"
   )
+
 if the_obj != None and len(the_obj.vertex_groups) != 0 :
     group_indices = dict \
       (
@@ -167,6 +168,42 @@ if the_obj != None and len(the_obj.vertex_groups) != 0 :
     out.write \
       (
         "  }\n"
+      )
+#end if
+
+materials = {}
+for f in the_mesh.polygons :
+    if f.material_index in materials :
+        slot = materials[f.material_index]
+    else :
+        slot = set()
+        materials[f.material_index] = slot
+    #end if
+    slot.add(f.index)
+#end for
+if len(materials) != 0 :
+    out.write \
+      (
+        "face_materials = \\\n"
+        "  {\n"
+      )
+    for slotindex in sorted(materials.keys()) :
+        out.write("    %d :\n" % slotindex)
+        out.write("      {\n")
+        slot = materials[slotindex]
+        for f in sorted(slot) :
+            out.write("        %d,\n" % f)
+        #end for
+        out.write("      },\n")
+    #end for
+    out.write \
+      (
+        "  }\n"
+      )
+else :
+    out.write \
+      (
+        "face_materials = {}\n"
       )
 #end if
 EOD
