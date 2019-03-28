@@ -113,28 +113,28 @@ else :
 out.write \
   (
     "vertices = \\\n"
-    "  [\n"
+    "    [\n"
   )
 verts_format = "(" + ", ".join(["%%.%dg" % nr_digits] * 3) + ")"
 for v in the_mesh.vertices :
-    out.write("    " + verts_format % tuple(v.co) + ",\n")
+    out.write("        " + verts_format % tuple(v.co) + ",\n")
 #end for
 out.write \
   (
-    "  ]\n"
+    "    ]\n"
     "\n"
     "faces = \\\n"
-    "  [\n"
+    "    [\n"
   )
 for f in the_mesh.polygons :
     out.write \
       (
-        "    [" + ", ".join("%d" % i for i in f.vertices) + "],\n"
+        "        [" + ", ".join("%d" % i for i in f.vertices) + "],\n"
       )
 #end for
 out.write \
   (
-    "  ]\n"
+    "    ]\n"
   )
 
 if the_obj != None and len(the_obj.vertex_groups) != 0 :
@@ -158,23 +158,23 @@ if the_obj != None and len(the_obj.vertex_groups) != 0 :
     out.write \
       (
         "vertex_groups = \\\n"
-        "  {\n"
+        "    {\n"
       )
     for group_name in sorted(group_indices.keys()) :
         group_index = group_indices[group_name]
         group_vertices = groups.get(group_index, {})
-        out.write("    %s :\n" % repr(group_name))
-        out.write("      {\n")
+        out.write("        %s :\n" % repr(group_name))
+        out.write("            {\n")
         for v in sorted(group_vertices.keys()) :
             if do_weights :
-                out.write("        %%d : %%.%dg,\n" % nr_digits % (v, group_vertices[v]))
+                out.write("                %%d : %%.%dg,\n" % nr_digits % (v, group_vertices[v]))
             else :
                 if group_vertices[v] != 0 :
-                    out.write("        %d,\n" % v)
+                    out.write("                %d,\n" % v)
                 #end if
             #end if
         #end for
-        out.write("      },\n")
+        out.write("            },\n")
     #end for
     out.write \
       (
@@ -196,20 +196,20 @@ if len(materials) != 0 :
     out.write \
       (
         "face_materials = \\\n"
-        "  {\n"
+        "    {\n"
       )
     for slotindex in sorted(materials.keys()) :
-        out.write("    %d :\n" % slotindex)
-        out.write("      {\n")
+        out.write("        %d :\n" % slotindex)
+        out.write("            {\n")
         slot = materials[slotindex]
         for f in sorted(slot) :
-            out.write("        %d,\n" % f)
+            out.write("                %d,\n" % f)
         #end for
-        out.write("      },\n")
+        out.write("            },\n")
     #end for
     out.write \
       (
-        "  }\n"
+        "    }\n"
       )
 else :
     out.write \
