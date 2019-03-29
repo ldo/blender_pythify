@@ -110,12 +110,13 @@ else :
     assert False
 #end if
 
+num_format = "%%.%dg" % nr_digits
 out.write \
   (
     "vertices = \\\n"
     "    [\n"
   )
-verts_format = "(" + ", ".join(["%%.%dg" % nr_digits] * 3) + ")"
+verts_format = "(" + ", ".join([num_format] * 3) + ")"
 for v in the_mesh.vertices :
     out.write("        " + verts_format % tuple(v.co) + ",\n")
 #end for
@@ -123,6 +124,34 @@ out.write \
   (
     "    ]\n"
     "\n"
+  )
+if len(the_mesh.vertices) != 0 :
+    out.write \
+      (
+        "bounds = \\\n"
+        "    (\n"
+      )
+    for axis in range(3) :
+        out.write \
+          (
+                "        (%s, %s),\n"
+            %
+                (num_format, num_format)
+            %
+                (
+                    min(v.co[axis] for v in the_mesh.vertices),
+                    max(v.co[axis] for v in the_mesh.vertices)
+                )
+          )
+    #end for
+    out.write \
+      (
+        "    )\n"
+        "\n"
+      )
+#end if
+out.write \
+  (
     "faces = \\\n"
     "    [\n"
   )
@@ -167,7 +196,7 @@ if the_obj != None and len(the_obj.vertex_groups) != 0 :
         out.write("            {\n")
         for v in sorted(group_vertices.keys()) :
             if do_weights :
-                out.write("                %%d : %%.%dg,\n" % nr_digits % (v, group_vertices[v]))
+                out.write("                %%d : %s,\n" % num_format % (v, group_vertices[v]))
             else :
                 if group_vertices[v] != 0 :
                     out.write("                %d,\n" % v)
