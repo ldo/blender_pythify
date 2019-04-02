@@ -125,7 +125,7 @@ else :
 if the_obj != None :
     the_mesh = the_obj.data
     if type(the_mesh) != bpy.types.Mesh :
-        raise getopt.GetoptError("object “%s” is not a mesh" % do_obj)
+        raise getopt.GetoptError("object “%s(%s)” is not a mesh" % (the_obj.name, the_obj.type))
     #end if
 elif do_mesh != "" :
     the_mesh = bpy.data.meshes.get(do_mesh)
