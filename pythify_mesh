@@ -2,8 +2,34 @@
 #+
 # This script runs Blender in batch mode on the specified .blend file,
 # and extracts the geometry of a specified mesh object in Python form,
-# such that it can be passed to the from_py_data API call to recreate
-# the mesh geometry.
+# such that it can be used, for example with the from_py_data API call
+# to recreate the mesh geometry. Invoke it as follows:
+#
+#     pythify_mesh [options...] «blendfile»
+#
+# where «blendfile» is the .blend file from which to extract the mesh.
+# The extracted data is written to standard output. Valid options are
+# as follows:
+#
+#    --blender=blender
+#          specifies the path to the Blender executable. Defaults to
+#          searching for the name “blender” in your PATH.
+#    --mesh=«meshname»
+#          specifies the name of the mesh datablock to extract.
+#          Cannot be specified together with --object.
+#    --noweights
+#          indicates that vertex group memberships are to be specified
+#          as a set (omitting the weights), rather than as a dict
+#          mapping vertices to their assigned weights.
+#    --object=«objectname»
+#          specifies the name of the object to extract. It must be
+#          of mesh type.
+#          Cannot be specified together with --mesh.
+#
+# Note Blender attaches vertex group information to the object datablock,
+# not the mesh datablock, so cannot be extracted if --mesh is specified.
+# If neither --mesh nor --object is specified, then the mesh is extracted
+# from the active object in the active scene in the .blend file.
 #-
 
 opterror()
