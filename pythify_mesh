@@ -27,7 +27,7 @@
 #          Cannot be specified together with --mesh.
 #
 # Note Blender attaches vertex group information to the object datablock,
-# not the mesh datablock, so cannot be extracted if --mesh is specified.
+# not the mesh datablock, so it cannot be extracted if --mesh is specified.
 # If neither --mesh nor --object is specified, then the mesh is extracted
 # from the active object in the active scene in the .blend file.
 #-
