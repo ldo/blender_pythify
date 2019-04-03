@@ -69,7 +69,7 @@ indices = ((3, 0, 1, 2), (0, 3, 2, 1))[sys.byteorder == "big"]
 for i in range(icon_size.y) :
     sys.stdout.write("   ")
     for j in range(icon_size.x) :
-        base = (i * icon_size.x + j) * 4
+        base = ((icon_size.y - 1 - i) * icon_size.x + j) * 4
         pixels = img_bytes[base : base + 4]
         pixel = \
             (
