@@ -1,0 +1,92 @@
+#!/usr/bin/python3
+#+
+# This script reads in a PNG file and outputs the pixels
+# in the form of a Python expression, suitable for insertion
+# into a Blender ImagePreview object for use as an icon.
+# Invoke it as follows:
+#
+#     pythify_icon «png_file»
+#
+# The pixel data will be written as a sequence of hexadecimal
+# integers to standard output.
+#-
+
+import sys
+import os
+import ctypes as ct
+import getopt
+import qahirah as qah
+from qahirah import \
+    CAIRO, \
+    Colour, \
+    Vector
+
+ICON_RENDER_DEFAULT_HEIGHT = 32 # from source/blender/blenkernel/BKE_icons.h
+icon_size = Vector(1, 1) * ICON_RENDER_DEFAULT_HEIGHT
+
+opts, args = getopt.getopt \
+  (
+    sys.argv[1:],
+    "",
+    []
+  )
+if len(args) != 1 :
+    raise getopt.GetoptError("expecting exactly one arg, the input PNG file")
+#end if
+img_file = args[0]
+
+in_img = qah.ImageSurface.create_from_png(img_file)
+icon_img = qah.ImageSurface.create \
+  (
+    format = CAIRO.FORMAT_ARGB32,
+    dimensions = icon_size
+  )
+ctx = \
+    (qah.Context.create(icon_img)
+        .set_source_colour(Colour.grey(0, 0))
+        .set_operator(CAIRO.OPERATOR_SOURCE)
+        .paint()
+        .set_operator(CAIRO.OPERATOR_OVER)
+    )
+img_size = in_img.dimensions
+if img_size.x > icon_size.x or img_size.y > icon_size.y :
+    # scale it down to fit, preserving the aspect ratio
+    scale_factor = min(tuple(icon_size / img_size))
+    img_size *= scale_factor
+else :
+    scale_factor = 1
+#end if
+ctx.translate((icon_size - img_size) / 2) # keep it centred
+ctx.scale(scale_factor)
+ctx.set_source_surface(in_img, (0, 0)).paint()
+icon_img.flush()
+nr_icon_bytes = icon_size.y * icon_size.x * 4
+img_bytes = (ct.c_ubyte * nr_icon_bytes).from_address(icon_img.data)
+sys.stdout.write("pixels = \\\n  (\n")
+# FIXME: not sure if this is correct, may need to do some endian conversion at
+# Blender end instead of/as well as this
+indices = ((3, 0, 1, 2), (0, 3, 2, 1))[sys.byteorder == "big"]
+for i in range(icon_size.y) :
+    sys.stdout.write("   ")
+    for j in range(icon_size.x) :
+        base = (i * icon_size.x + j) * 4
+        pixels = img_bytes[base : base + 4]
+        pixel = \
+            (
+                pixels[indices[0]] << 24
+            |
+                pixels[indices[1]] << 16
+            |
+                pixels[indices[2]] << 8
+            |
+                pixels[indices[3]]
+            )
+        if pixel >= 0x80000000 :
+            # Blender wants signed integers!
+            pixel -= 0x100000000
+        #end if
+        sys.stdout.write(" %#0.8x," % pixel)
+    #end for
+    sys.stdout.write("\n")
+#end for
+sys.stdout.write("  )\n")
