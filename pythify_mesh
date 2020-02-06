@@ -191,6 +191,19 @@ out.write \
   (
     "    ]\n"
   )
+out.write("smooth_faces = [")
+first = True
+for i, f in enumerate(the_mesh.polygons) :
+    if f.use_smooth :
+        if first :
+            first = False
+        else :
+            out.write(", ")
+        #end if
+        out.write("%d" % i)
+    #end if
+#end for
+out.write("]\n")
 
 if the_obj != None and len(the_obj.vertex_groups) != 0 :
     group_indices = dict \
